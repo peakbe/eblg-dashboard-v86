@@ -90,26 +90,31 @@ function initSonometers() {
    METAR
 ---------------------------------------------------------- */
 
-async function fetchMetar() {
-  const res = await fetch(METAR_URL);
-  if (!res.ok) throw new Error("METAR error");
-  return res.json();
-}
+app.get("/metar", async (req, res) => {
+  try {
+    const url = `https://avwx.rest/api/metar/EBLG?format=json&token=${process.env.AVWX_API_KEY}`;
 
-function updateMetarUI(metar) {
-  const el = document.getElementById("meteo-summary");
-  if (!metar) {
-    el.textContent = "METAR indisponible";
-    return;
+    const r = await fetch(url, {
+      headers: {
+        "Accept": "application/json",
+        "User-Agent": "EBLG-Dashboard/1.0"
+      }
+    });
+
+    if (!r.ok) {
+      console.error("AVWX error:", await r.text());
+      return res.status(500).json({ error: "Erreur AVWX" });
+    }
+
+    const data = await r.json();
+    res.json(data);
+
+  } catch (err) {
+    console.error("Erreur METAR :", err);
+    res.status(500).json({ error: "Erreur serveur METAR" });
   }
+});
 
-  const txt = `${metar.station} ${metar.time.dt}
-Vent ${metar.wind_direction}° ${metar.wind_speed}kt
-Visibilité ${metar.visibility?.meters || "-"}m
-Ciel ${metar.clouds?.map(c => c.text).join(", ") || "-"}`;
-
-  el.textContent = txt;
-}
 
 /* ----------------------------------------------------------
    FIDS FETCH
