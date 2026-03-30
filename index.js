@@ -75,20 +75,48 @@ app.get("/taf", async (req, res) => {
 });
 
 /* ----------------------------------------------------------
-   FIDS AVEC FALLBACK
+   FIDS AVEC CORS + FALLBACK ROBUSTE
 ---------------------------------------------------------- */
 app.get("/fids", async (req, res) => {
   try {
-    // Remplace cette URL par ta vraie source FIDS quand tu l'auras
-    const response = await fetch("https://opensky-network.org/api/flights/departure?airport=EBLG&begin=0&end=0");
+    const url = "https://opensky-network.org/api/flights/departure?airport=EBLG&begin=0&end=0";
 
-    if (!response.ok) throw new Error("FIDS offline");
+    let response;
+    try {
+      response = await fetch(url, { timeout: 5000 });
+    } catch (networkError) {
+      console.error("Erreur réseau FIDS :", networkError);
+      return res.json([
+        {
+          flight: "N/A",
+          destination: "N/A",
+          time: "N/A",
+          status: "Unavailable",
+          fallback: true,
+          timestamp: new Date().toISOString()
+        }
+      ]);
+    }
+
+    if (!response.ok) {
+      console.error("FIDS HTTP error :", response.status);
+      return res.json([
+        {
+          flight: "N/A",
+          destination: "N/A",
+          time: "N/A",
+          status: "Unavailable",
+          fallback: true,
+          timestamp: new Date().toISOString()
+        }
+      ]);
+    }
 
     const data = await response.json();
     return res.json(data);
 
   } catch (error) {
-    console.error("FIDS DOWN → fallback activé");
+    console.error("FIDS DOWN → fallback activé :", error.message);
 
     return res.json([
       {
@@ -102,6 +130,7 @@ app.get("/fids", async (req, res) => {
     ]);
   }
 });
+
 
 /* ----------------------------------------------------------
    DÉMARRAGE DU SERVEUR (MANQUAIT !)
