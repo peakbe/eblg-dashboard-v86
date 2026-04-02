@@ -16,9 +16,6 @@ import { loadFids } from "./js/fids.js";
 // UI
 import { initUI } from "./js/ui.js";
 
-// Heatmap
-import { initHeatmapToggle } from "./js/sonometers.js";
-
 
 // ======================================================
 // INITIALISATION
@@ -32,10 +29,7 @@ window.onload = () => {
     // 2) UI
     initUI();
 
-    // 3) Heatmap
-    initHeatmapToggle(window.map);
-
-    // 4) Données
+    // 3) Données
     loadMetar();
     loadTaf();
     loadFids();
